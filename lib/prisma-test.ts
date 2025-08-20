@@ -73,8 +73,8 @@ export async function testSchemaRelationships(): Promise<boolean> {
     // This test doesn't actually create data, just tests that the schema
     // allows for the expected relationships to be defined
     
-    // Test User relationships
-    type UserWithRelations = User & {
+    // Test type relationships compilation (these types should compile without errors)
+    const userRelationsTest: User & {
       accounts: any[];
       sessions: any[];
       subscriptions: any[];
@@ -88,30 +88,27 @@ export async function testSchemaRelationships(): Promise<boolean> {
       createdQuestions: any[];
       createdTestSeries: any[];
       notifications: any[];
-    };
+    } = {} as any;
     
-    // Test Course relationships
-    type CourseWithRelations = Course & {
+    const courseRelationsTest: Course & {
       category: any;
       instructor: any;
       lessons: any[];
       enrollments: any[];
       progress: any[];
-    };
+    } = {} as any;
     
-    // Test Question relationships
-    type QuestionWithRelations = Question & {
+    const questionRelationsTest: Question & {
       creator: any;
       testSeries: any;
       attempts: any[];
-    };
+    } = {} as any;
     
-    // Test TestSeries relationships
-    type TestSeriesWithRelations = TestSeries & {
+    const testSeriesRelationsTest: TestSeries & {
       creator: any;
       exam: any;
       questions: any[];
-    };
+    } = {} as any;
     
     // If TypeScript compiles these types without errors, relationships are correct
     console.info('✅ Schema relationships test passed');
@@ -184,7 +181,7 @@ export async function testEnumTypes(): Promise<boolean> {
       const actualValues = Object.values(enumObj);
       
       for (const expectedValue of expectedValues) {
-        if (!actualValues.includes(expectedValue)) {
+        if (!actualValues.includes(expectedValue as any)) {
           throw new Error(`Enum ${enumName} missing value: ${expectedValue}`);
         }
       }

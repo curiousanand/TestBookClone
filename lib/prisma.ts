@@ -16,21 +16,21 @@ import { PrismaClient } from '@prisma/client';
  */
 const createPrismaClientOptions = () => {
   // Use DATABASE_URL directly for Prisma testing to avoid config validation
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env['DATABASE_URL'];
   
   return {
     log: process.env.NODE_ENV === 'development' 
-      ? ['query', 'info', 'warn', 'error'] as const
-      : ['warn', 'error'] as const,
+      ? ['query', 'info', 'warn', 'error']
+      : ['warn', 'error'],
     
-    errorFormat: process.env.NODE_ENV === 'development' ? 'pretty' : 'minimal',
+    errorFormat: process.env.NODE_ENV === 'development' ? 'pretty' as const : 'minimal' as const,
     
     datasources: {
       db: {
-        url: databaseUrl,
+        url: databaseUrl || '',
       },
     },
-  } as const;
+  };
 };
 
 /**
@@ -55,7 +55,7 @@ const createPrismaClient = () => {
 
   // Enable query logging in development
   if (process.env.NODE_ENV === 'development') {
-    prisma.$on('query', (e) => {
+    prisma.$on('query', (e: any) => {
       console.log('Query: ' + e.query);
       console.log('Params: ' + e.params);
       console.log('Duration: ' + e.duration + 'ms');
@@ -109,7 +109,7 @@ export const disconnect = async (): Promise<void> => {
  * Execute a transaction with retry logic
  */
 export const executeTransaction = async <T>(
-  operation: (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>) => Promise<T>,
+  operation: (tx: any) => Promise<T>,
   maxRetries = 3
 ): Promise<T> => {
   let lastError: unknown;
@@ -119,7 +119,6 @@ export const executeTransaction = async <T>(
       return await prisma.$transaction(operation, {
         timeout: 30000, // 30 seconds timeout
         maxWait: 5000,  // 5 seconds max wait
-        isolationLevel: 'ReadCommitted',
       });
     } catch (error) {
       lastError = error;
