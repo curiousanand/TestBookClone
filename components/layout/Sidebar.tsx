@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Button, Avatar, Badge } from '../ui';
 
 interface User {
@@ -28,7 +29,7 @@ interface SidebarItem {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  user?: User | null;
+  user?: User | null | undefined;
   currentLanguage?: 'en' | 'hi';
   onLanguageChange?: (language: 'en' | 'hi') => void;
   className?: string;
@@ -42,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLanguageChange,
   className = ''
 }) => {
+  const router = useRouter();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -249,7 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center space-x-3">
               <Avatar
                 name={user.name}
-                src={user.avatar}
+                {...(user.avatar ? { src: user.avatar } : {})}
                 size="md"
                 status="online"
               />
@@ -264,10 +266,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" href="/profile" className="justify-center">
+              <Button variant="outline" size="sm" onClick={() => { router.push('/profile'); onClose(); }} className="justify-center">
                 Profile
               </Button>
-              <Button variant="outline" size="sm" href="/dashboard" className="justify-center">
+              <Button variant="outline" size="sm" onClick={() => { router.push('/dashboard'); onClose(); }} className="justify-center">
                 Dashboard
               </Button>
             </div>
@@ -275,10 +277,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" href="/auth/signin" className="justify-center">
+              <Button variant="outline" size="sm" onClick={() => { router.push('/auth/signin'); onClose(); }} className="justify-center">
                 Sign In
               </Button>
-              <Button variant="primary" size="sm" href="/auth/signup" className="justify-center">
+              <Button variant="primary" size="sm" onClick={() => { router.push('/auth/signup'); onClose(); }} className="justify-center">
                 Sign Up
               </Button>
             </div>

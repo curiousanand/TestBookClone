@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
@@ -16,7 +16,7 @@ interface User {
 
 interface LayoutProps {
   children: React.ReactNode;
-  user?: User | null;
+  user?: User | null | undefined;
   showHeader?: boolean;
   showFooter?: boolean;
   showSidebar?: boolean;

@@ -27,7 +27,7 @@ interface NavigationItem {
 }
 
 interface HeaderProps {
-  user?: User | null;
+  user?: User | null | undefined;
   currentLanguage?: 'en' | 'hi';
   onLanguageChange?: (language: 'en' | 'hi') => void;
   onMobileMenuToggle?: () => void;
@@ -310,7 +310,7 @@ const Header: React.FC<HeaderProps> = ({
                   <button className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
                     <Avatar
                       name={user.name}
-                      src={user.avatar}
+                      {...(user.avatar ? { src: user.avatar } : {})}
                       size="sm"
                       status="online"
                     />
