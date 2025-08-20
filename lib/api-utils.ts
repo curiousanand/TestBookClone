@@ -587,7 +587,13 @@ export function createApiRoute(config: RouteConfig = {}) {
         }
 
         // Create validated request object
-        const validatedRequest = request as ValidatedRequest;
+        const validatedRequest = {
+          ...request,
+          user: undefined,
+          params: undefined,
+          query: undefined,
+          body: undefined,
+        } as ValidatedRequest;
 
         // Parse and validate parameters
         if (context?.params && config.validation?.params) {

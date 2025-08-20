@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ReduxProvider } from '@/components/providers/ReduxProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +26,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        {children}
+        <ErrorBoundary>
+          <ReduxProvider>
+            {children}
+          </ReduxProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
