@@ -76,9 +76,9 @@ export const POST = handler(async (request) => {
   const hashedPassword = await hashPassword(password);
 
   // Update the user's password
-  if (user.accounts.length > 0) {
+  if (user.accounts && user.accounts.length > 0) {
     await prisma.account.update({
-      where: { id: user.accounts[0].id },
+      where: { id: user.accounts[0]!.id },
       data: { password: hashedPassword },
     });
   } else {

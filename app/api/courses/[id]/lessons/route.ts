@@ -21,7 +21,6 @@ const createLessonSchema = z.object({
   content: z.string().optional(),
   videoUrl: z.string().url('Invalid video URL').optional(),
   videoDuration: z.number().min(0, 'Video duration must be non-negative').optional(),
-  isPreview: z.boolean().default(false),
   isFree: z.boolean().default(false),
   sortOrder: z.number().min(0, 'Sort order must be non-negative'),
 });
@@ -33,8 +32,12 @@ const getHandler = createApiRoute({
   },
 });
 
-export const GET = getHandler(async (request, { params }) => {
-  const { id: courseId } = params!;
+export const GET = getHandler(async (request, context) => {
+  const { id: courseId } = context?.params || {};
+  
+  if (!courseId) {
+    return sendError('Course ID is required', 400);
+  }
 
   // Get the course
   const course = await prisma.course.findUnique({
@@ -79,7 +82,6 @@ export const GET = getHandler(async (request, { params }) => {
       title: true,
       description: true,
       videoDuration: true,
-      isPreview: true,
       isFree: true,
       sortOrder: true,
       isPublished: true,
@@ -99,7 +101,7 @@ export const GET = getHandler(async (request, { params }) => {
     }
     
     // Show published lessons and previews to others
-    return lesson.isPublished || lesson.isPreview;
+    return lesson.isPublished || lesson.isFree;
   });
 
   return sendSuccess({
@@ -116,8 +118,12 @@ const postHandler = createApiRoute({
   },
 });
 
-export const POST = postHandler(async (request, { params }) => {
-  const { id: courseId } = params!;
+export const POST = postHandler(async (request, context) => {
+  const { id: courseId } = context?.params || {};
+  
+  if (!courseId) {
+    return sendError('Course ID is required', 400);
+  }
   const lessonData = request.body!;
   const user = request.user!;
 
@@ -153,7 +159,6 @@ export const POST = postHandler(async (request, { params }) => {
       content: lesson.content,
       videoUrl: lesson.videoUrl,
       videoDuration: lesson.videoDuration,
-      isPreview: lesson.isPreview,
       isFree: lesson.isFree,
       isPublished: lesson.isPublished,
       sortOrder: lesson.sortOrder,

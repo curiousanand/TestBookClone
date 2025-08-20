@@ -6,7 +6,7 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
+import { createApiRoute, sendSuccess } from '@/lib/api-utils';
 import { generatePasswordResetToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -51,6 +51,7 @@ export const POST = handler(async (request) => {
   await prisma.passwordReset.create({
     data: {
       userId: user.id,
+      email: user.email,
       token: resetToken,
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
     },

@@ -4,7 +4,6 @@
  * Handles email verification using verification tokens.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { verifyJWT } from '@/lib/auth';

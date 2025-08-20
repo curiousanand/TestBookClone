@@ -5,10 +5,10 @@
  * Includes validation, user creation, and email verification.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
-import { createUser, generateEmailVerificationToken } from '@/lib/auth';
+import { createUser } from '@/lib/auth';
+// import { generateEmailVerificationToken } from '@/lib/auth';
 
 // Validation schema
 const registerSchema = z.object({
@@ -43,10 +43,8 @@ export const POST = handler(async (request) => {
     // Create user
     const user = await createUser(userData);
 
-    // Generate email verification token
-    const verificationToken = generateEmailVerificationToken(user.id, user.email);
-    
-    // TODO: Send verification email
+    // TODO: Generate and send email verification token
+    // const verificationToken = generateEmailVerificationToken(user.id, user.email);
     // await sendVerificationEmail(user.email, verificationToken);
 
     return sendSuccess({

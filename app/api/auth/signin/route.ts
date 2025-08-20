@@ -5,7 +5,6 @@
  * Returns JWT token and user information.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { authenticateUser } from '@/lib/auth';

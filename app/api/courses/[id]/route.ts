@@ -39,7 +39,11 @@ const getHandler = createApiRoute({
 });
 
 export const GET = getHandler(async (request, context) => {
-  const { id } = context?.params!;
+  const { id } = context?.params || {};
+
+  if (!id) {
+    return sendError('Course ID is required', 400);
+  }
 
   const course = await prisma.course.findUnique({
     where: { id },
@@ -126,7 +130,11 @@ const putHandler = createApiRoute({
 });
 
 export const PUT = putHandler(async (request, context) => {
-  const { id } = context?.params!;
+  const { id } = context?.params || {};
+
+  if (!id) {
+    return sendError('Course ID is required', 400);
+  }
   const updateData = request.body!;
   const user = request.user!;
 
@@ -200,7 +208,11 @@ const deleteHandler = createApiRoute({
 });
 
 export const DELETE = deleteHandler(async (request, context) => {
-  const { id } = context?.params!;
+  const { id } = context?.params || {};
+
+  if (!id) {
+    return sendError('Course ID is required', 400);
+  }
   const user = request.user!;
 
   // Get the course to check ownership

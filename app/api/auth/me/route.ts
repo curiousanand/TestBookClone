@@ -4,7 +4,6 @@
  * Returns information about the currently authenticated user.
  */
 
-import { NextRequest } from 'next/server';
 import { createApiRoute, sendSuccess } from '@/lib/api-utils';
 
 // Handler

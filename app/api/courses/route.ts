@@ -4,7 +4,6 @@
  * Handles course listing, creation, and search functionality.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, parsePagination, createPaginationMeta } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';
@@ -53,15 +52,15 @@ export const GET = getHandler(async (request) => {
   // Build filters
   const where: any = {};
 
-  if (query.search) {
+  if (query['search']) {
     where.OR = [
-      { title: { contains: query.search, mode: 'insensitive' } },
-      { description: { contains: query.search, mode: 'insensitive' } },
+      { title: { contains: query['search'], mode: 'insensitive' } },
+      { description: { contains: query['search'], mode: 'insensitive' } },
     ];
   }
 
-  if (query.category) {
-    where.category = { slug: query.category };
+  if (query['category']) {
+    where.category = { slug: query['category'] };
   }
 
   if (query.level) {

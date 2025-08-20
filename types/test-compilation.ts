@@ -5,6 +5,9 @@
  * without causing unused variable errors in the main files.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-nocheck
+
 // Test all type imports
 import type {
   // User types

@@ -22,8 +22,13 @@ const postHandler = createApiRoute({
   },
 });
 
-export const POST = postHandler(async (request, { params }) => {
-  const { id: courseId } = params!;
+export const POST = postHandler(async (request, context) => {
+  const { id: courseId } = context?.params || {};
+  
+  if (!courseId) {
+    return sendError('Course ID is required', 400);
+  }
+  
   const user = request.user!;
 
   // Get the course
@@ -66,15 +71,6 @@ export const POST = postHandler(async (request, { params }) => {
       courseId,
       enrolledAt: new Date(),
     },
-    include: {
-      course: {
-        select: {
-          title: true,
-          slug: true,
-          thumbnail: true,
-        },
-      },
-    },
   });
 
   return sendSuccess({
@@ -82,7 +78,7 @@ export const POST = postHandler(async (request, { params }) => {
       id: enrollment.id,
       courseId: enrollment.courseId,
       enrolledAt: enrollment.enrolledAt,
-      course: enrollment.course,
+      progressPercent: enrollment.progressPercent,
     },
     message: 'Successfully enrolled in course',
   }, undefined, 201);
@@ -96,8 +92,13 @@ const deleteHandler = createApiRoute({
   },
 });
 
-export const DELETE = deleteHandler(async (request, { params }) => {
-  const { id: courseId } = params!;
+export const DELETE = deleteHandler(async (request, context) => {
+  const { id: courseId } = context?.params || {};
+  
+  if (!courseId) {
+    return sendError('Course ID is required', 400);
+  }
+  
   const user = request.user!;
 
   // Check if enrolled

@@ -545,11 +545,11 @@ export type ValidatorFunction<T = any> = (
 /**
  * Validation schema with custom validators
  */
-export interface ExtendedValidationSchema<T> extends ValidationSchema<T> {
+export type ExtendedValidationSchema<T> = ValidationSchema<T> & {
   [key: string]: ValidationRule<any> & {
     validators?: ValidatorFunction<T>[];
   };
-}
+};
 
 // =============================================================================
 // PERMISSION & AUTHORIZATION TYPES

@@ -289,7 +289,24 @@ export interface AccessibilitySettings {
 /**
  * User subscription with plan details
  */
-export interface UserSubscription extends Subscription {
+export interface UserSubscription {
+  // Base subscription data
+  id: string;
+  status: SubscriptionStatus;
+  userId: string;
+  planName: string;
+  planType: string;
+  amount: number;
+  currency: string;
+  billingCycle: string;
+  startDate: Date;
+  endDate: Date;
+  trialEndDate?: Date;
+  autoRenew: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  
+  // Extended data
   plan: SubscriptionPlan;
   features: SubscriptionFeature[];
   usage: SubscriptionUsage;

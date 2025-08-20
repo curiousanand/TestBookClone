@@ -13,7 +13,7 @@ const handler = createApiRoute({
   requireAuth: true,
 });
 
-export const POST = handler(async (request) => {
+export const POST = handler(async () => {
   // Sign out user
   await signOut();
 
