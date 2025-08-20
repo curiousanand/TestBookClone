@@ -168,11 +168,17 @@ export interface FormFieldProps extends BaseComponentProps {
 export interface InputProps extends FormFieldProps, 
   Omit<ComponentProps<'input'>, 'size'> {
   size?: ComponentSize;
-  variant?: 'outline' | 'filled' | 'underline';
+  variant?: 'default' | 'filled' | 'underlined';
+  fullWidth?: boolean;
+  readonly?: boolean;
+  helperText?: string;
+  success?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   leftAddon?: ReactNode;
   rightAddon?: ReactNode;
+  showCount?: boolean;
+  wrapperClassName?: string;
 }
 
 /**
@@ -377,16 +383,20 @@ export interface TableAction<T = any> {
  * Card component props
  */
 export interface CardProps extends BaseComponentProps, WithChildren {
-  title?: ReactNode;
-  subtitle?: ReactNode;
-  extra?: ReactNode;
-  cover?: ReactNode;
-  actions?: ReactNode;
-  loading?: boolean;
-  hoverable?: boolean;
-  bordered?: boolean;
+  variant?: 'default' | 'outlined' | 'elevated' | 'filled';
   size?: ComponentSize;
+  hoverable?: boolean;
+  clickable?: boolean;
+  shadow?: boolean;
+  onClick?: () => void;
 }
+
+/**
+ * Card sub-component props
+ */
+export interface CardHeaderProps extends BaseComponentProps, WithChildren {}
+export interface CardBodyProps extends BaseComponentProps, WithChildren {}
+export interface CardFooterProps extends BaseComponentProps, WithChildren {}
 
 /**
  * Avatar component props
@@ -395,24 +405,33 @@ export interface AvatarProps extends BaseComponentProps {
   src?: string;
   alt?: string;
   name?: string;
-  size?: ComponentSize | number;
+  size?: ComponentSize;
   shape?: 'circle' | 'square';
-  fallback?: ReactNode;
+  showBorder?: boolean;
   status?: 'online' | 'offline' | 'away' | 'busy';
-  badge?: ReactNode;
+  fallbackSrc?: string;
+  onClick?: () => void;
+}
+
+/**
+ * Avatar group component props
+ */
+export interface AvatarGroupProps extends BaseComponentProps, WithChildren {
+  max?: number;
+  size?: ComponentSize;
+  spacing?: 'tight' | 'normal' | 'loose';
 }
 
 /**
  * Badge component props
  */
 export interface BadgeProps extends BaseComponentProps, WithChildren {
-  count?: number;
-  showZero?: boolean;
-  max?: number;
-  dot?: boolean;
-  color?: ComponentColor;
+  variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'outline' | 'outline-primary' | 'outline-success' | 'outline-warning' | 'outline-danger';
   size?: ComponentSize;
-  status?: 'default' | 'processing' | 'success' | 'error' | 'warning';
+  rounded?: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  withDot?: boolean;
+  removable?: boolean;
+  onRemove?: () => void;
 }
 
 /**
@@ -447,17 +466,55 @@ export interface AlertProps extends BaseComponentProps, WithChildren {
  * Modal component props
  */
 export interface ModalProps extends BaseComponentProps, WithChildren {
-  open: boolean;
-  onClose: () => void;
-  title?: ReactNode;
-  footer?: ReactNode;
-  width?: number | string;
+  open?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   centered?: boolean;
-  closable?: boolean;
-  maskClosable?: boolean;
-  destroyOnClose?: boolean;
-  loading?: boolean;
+  closeOnOverlayClick?: boolean;
+  closeOnEscape?: boolean;
+  preventScroll?: boolean;
+  overlayClassName?: string;
+  onClose?: () => void;
+  onOpen?: () => void;
+  onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
+
+/**
+ * Modal sub-component props
+ */
+export interface ModalHeaderProps extends BaseComponentProps, WithChildren {
+  showCloseButton?: boolean;
+  onClose?: () => void;
+}
+export interface ModalBodyProps extends BaseComponentProps, WithChildren {}
+export interface ModalFooterProps extends BaseComponentProps, WithChildren {}
+
+/**
+ * Dropdown component props
+ */
+export interface DropdownProps extends BaseComponentProps, WithChildren {
+  trigger: ReactNode;
+  placement?: 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'left-start' | 'left-end' | 'right' | 'right-start' | 'right-end';
+  offset?: number;
+  closeOnClick?: boolean;
+  disabled?: boolean;
+  triggerClassName?: string;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+/**
+ * Dropdown sub-component props
+ */
+export interface DropdownItemProps extends BaseComponentProps, WithChildren {
+  disabled?: boolean;
+  danger?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  onClose?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+export interface DropdownDividerProps extends BaseComponentProps {}
 
 /**
  * Drawer component props
@@ -506,12 +563,12 @@ export interface ProgressProps extends BaseComponentProps {
  * Loading component props
  */
 export interface LoadingProps extends BaseComponentProps {
-  loading: boolean;
-  children: ReactNode;
-  indicator?: ReactNode;
-  tip?: string;
   size?: ComponentSize;
-  delay?: number;
+  variant?: 'spinner' | 'dots' | 'bars' | 'pulse' | 'ring';
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'white';
+  overlay?: boolean;
+  fullScreen?: boolean;
+  text?: string;
 }
 
 // =============================================================================
@@ -523,17 +580,14 @@ export interface LoadingProps extends BaseComponentProps {
  */
 export interface ButtonProps extends BaseComponentProps,
   Omit<ComponentProps<'button'>, 'type'> {
-  variant?: ComponentVariant;
-  color?: ComponentColor;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'link';
   size?: ComponentSize;
+  fullWidth?: boolean;
   loading?: boolean;
   disabled?: boolean;
-  icon?: ReactNode;
-  iconPosition?: 'left' | 'right';
-  block?: boolean;
-  htmlType?: 'button' | 'submit' | 'reset';
-  href?: string;
-  target?: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 /**

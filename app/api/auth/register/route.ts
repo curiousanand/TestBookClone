@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, generateEmailVerificationToken } from '@/lib/auth';
+import { createUser } from '@/lib/auth';
 import type { RegisterData, ApiResponse } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'Missing required fields',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -34,7 +37,10 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'Passwords do not match',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -45,17 +51,18 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'You must accept the Terms of Service',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
     // Create user
     const user = await createUser(body);
 
-    // Generate email verification token
-    const verificationToken = generateEmailVerificationToken(user.id, user.email);
-
-    // TODO: Send verification email
+    // TODO: Generate email verification token and send verification email
+    // const verificationToken = generateEmailVerificationToken(user.id, user.email);
     // await sendVerificationEmail(user.email, verificationToken);
 
     return NextResponse.json({
@@ -82,6 +89,7 @@ export async function POST(request: NextRequest) {
           code: 'CONFLICT_ERROR',
           message: 'A user with this email already exists',
           statusCode: 409,
+          type: 'CONFLICT_ERROR',
         },
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
@@ -95,6 +103,7 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: error.message,
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
@@ -107,6 +116,7 @@ export async function POST(request: NextRequest) {
         code: 'SERVER_ERROR',
         message: 'Internal server error',
         statusCode: 500,
+        type: 'SERVER_ERROR',
       },
       timestamp: new Date().toISOString(),
       requestId: crypto.randomUUID(),

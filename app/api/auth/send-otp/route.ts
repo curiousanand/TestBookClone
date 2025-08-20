@@ -12,7 +12,7 @@ import type { ApiResponse } from '@/types';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { phoneNumber, email, type = 'phone_verification' } = body;
+    const { phoneNumber, email } = body;
 
     if (!phoneNumber && !email) {
       return NextResponse.json({
@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'Phone number or email is required',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -43,7 +46,10 @@ export async function POST(request: NextRequest) {
             code: 'SMS_SEND_ERROR',
             message: 'Failed to send SMS. Please try again.',
             statusCode: 500,
+            type: 'SERVER_ERROR',
           },
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
         } satisfies ApiResponse, { status: 500 });
       }
     } else {
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
         code: 'SERVER_ERROR',
         message: 'Failed to send OTP. Please try again.',
         statusCode: 500,
+        type: 'SERVER_ERROR',
       },
       timestamp: new Date().toISOString(),
       requestId: crypto.randomUUID(),

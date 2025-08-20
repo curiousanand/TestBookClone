@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { PhoneVerification, FormField } from '@/types';
+import type { FormField } from '@/types';
 
 // =============================================================================
 // TYPES
@@ -84,7 +84,7 @@ export default function PhoneOTPForm({
   otpLength = 6,
 }: PhoneOTPFormProps) {
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const resendTimerRef = useRef<NodeJS.Timeout>();
+  const resendTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [formState, setFormState] = useState<OTPFormState>({
     phoneNumber: { 
@@ -126,6 +126,7 @@ export default function PhoneOTPForm({
     return () => {
       if (resendTimerRef.current) {
         clearInterval(resendTimerRef.current);
+        resendTimerRef.current = null;
       }
     };
   }, []);
@@ -138,7 +139,10 @@ export default function PhoneOTPForm({
       setFormState(prev => {
         const newCountdown = prev.resendCountdown - 1;
         if (newCountdown <= 0) {
-          clearInterval(resendTimerRef.current);
+          if (resendTimerRef.current) {
+            clearInterval(resendTimerRef.current);
+            resendTimerRef.current = null;
+          }
           return { ...prev, resendCountdown: 0, canResend: true };
         }
         return { ...prev, resendCountdown: newCountdown };
@@ -475,7 +479,7 @@ export default function PhoneOTPForm({
               {Array.from({ length: otpLength }, (_, index) => (
                 <input
                   key={index}
-                  ref={(el) => (otpInputRefs.current[index] = el)}
+                  ref={(el) => { otpInputRefs.current[index] = el; }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}

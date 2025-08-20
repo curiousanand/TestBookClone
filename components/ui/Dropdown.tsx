@@ -149,7 +149,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
       };
     }, [isOpen, handleClickOutside, handleKeyDown]);
 
-    const triggerElement = React.cloneElement(trigger as React.ReactElement, {
+    const triggerElement = React.cloneElement(trigger as React.ReactElement<any>, {
       ref: triggerRef,
       onClick: handleToggle,
       onKeyDown: (event: React.KeyboardEvent) => {
@@ -157,11 +157,11 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
           event.preventDefault();
           handleToggle();
         }
-        trigger.props.onKeyDown?.(event);
+        (trigger as any).props.onKeyDown?.(event);
       },
       'aria-expanded': isOpen,
       'aria-haspopup': 'menu',
-      className: `${trigger.props.className || ''} ${triggerClassName}`,
+      className: `${(trigger as any).props.className || ''} ${triggerClassName}`,
       disabled
     });
 
@@ -188,7 +188,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                     itemsRef.current[index] = el;
                   },
                   onClose: closeOnClick ? handleClose : undefined,
-                  ...child.props
+                  ...(child as any).props
                 });
               }
               return child;
