@@ -4,7 +4,6 @@
  * Handles user listing and management functionality for admin users.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, parsePagination, createPaginationMeta } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';

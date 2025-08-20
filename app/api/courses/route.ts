@@ -32,7 +32,7 @@ const createCourseSchema = z.object({
   price: z.number().min(0, 'Price must be non-negative'),
   originalPrice: z.number().min(0, 'Original price must be non-negative').optional(),
   isFree: z.boolean().default(false),
-  duration: z.number().min(1, 'Duration must be at least 1 hour'),
+  estimatedHours: z.number().min(1, 'Estimated hours must be at least 1 hour'),
   thumbnail: z.string().url('Invalid thumbnail URL').optional(),
   tags: z.array(z.string()).default([]),
   isPublished: z.boolean().default(false),
@@ -63,16 +63,16 @@ export const GET = getHandler(async (request) => {
     where.category = { slug: query['category'] };
   }
 
-  if (query.level) {
-    where.level = query.level;
+  if (query['level']) {
+    where.level = query['level'];
   }
 
-  if (query.language) {
-    where.language = query.language;
+  if (query['language']) {
+    where.language = query['language'];
   }
 
-  if (query.isFree !== undefined) {
-    where.isFree = query.isFree;
+  if (query['isFree'] !== undefined) {
+    where.isFree = query['isFree'];
   }
 
   // Only show published courses for non-authenticated users
@@ -86,7 +86,7 @@ export const GET = getHandler(async (request) => {
       where,
       skip,
       take,
-      orderBy,
+      ...(orderBy && { orderBy }),
       include: {
         category: {
           select: { name: true, slug: true },
@@ -113,7 +113,7 @@ export const GET = getHandler(async (request) => {
       price: course.price,
       originalPrice: course.originalPrice,
       isFree: course.isFree,
-      duration: course.duration,
+      estimatedHours: course.estimatedHours,
       thumbnail: course.thumbnail,
       tags: course.tags,
       isPublished: course.isPublished,
@@ -124,7 +124,7 @@ export const GET = getHandler(async (request) => {
       createdAt: course.createdAt,
     })),
     createPaginationMeta(
-      parseInt(query.page || '1'),
+      parseInt(query['page'] || '1'),
       take,
       total
     )
@@ -180,7 +180,7 @@ export const POST = postHandler(async (request) => {
       price: course.price,
       originalPrice: course.originalPrice,
       isFree: course.isFree,
-      duration: course.duration,
+      estimatedHours: course.estimatedHours,
       thumbnail: course.thumbnail,
       tags: course.tags,
       isPublished: course.isPublished,

@@ -4,7 +4,6 @@
  * Handles course enrollment and unenrollment.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';

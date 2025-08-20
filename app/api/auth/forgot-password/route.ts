@@ -4,7 +4,6 @@
  * Handles password reset requests by sending reset tokens.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess } from '@/lib/api-utils';
 import { generatePasswordResetToken } from '@/lib/auth';

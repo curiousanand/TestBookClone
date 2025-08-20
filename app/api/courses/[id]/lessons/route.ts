@@ -4,7 +4,6 @@
  * Handles listing and creating lessons for a course.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';

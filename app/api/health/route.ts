@@ -4,7 +4,6 @@
  * Provides system health status and diagnostics.
  */
 
-import { NextRequest } from 'next/server';
 import { createApiRoute, sendSuccess } from '@/lib/api-utils';
 import { getSystemHealth } from '@/lib/api-utils';
 

@@ -4,7 +4,6 @@
  * Handles starting, submitting, and managing exam attempts.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';
@@ -32,24 +31,32 @@ const postHandler = createApiRoute({
   },
 });
 
-export const POST = postHandler(async (request, { params }) => {
-  const { id: examId } = params!;
+export const POST = postHandler(async (request, context) => {
+  const { id: examId } = context?.params || {};
+  
+  if (!examId) {
+    return sendError('Exam ID is required', 400);
+  }
   const user = request.user!;
 
-  // Get the exam
+  // Get the exam with its test series
   const exam = await prisma.exam.findUnique({
     where: { id: examId },
     include: {
-      questions: {
-        select: {
-          id: true,
-          title: true,
-          questionText: true,
-          type: true,
-          options: true,
-          marks: true,
-          negativeMarks: true,
-          difficulty: true,
+      testSeries: {
+        include: {
+          questions: {
+            select: {
+              id: true,
+              title: true,
+              questionText: true,
+              type: true,
+              options: true,
+              marks: true,
+              negativeMarks: true,
+              difficulty: true,
+            },
+          },
         },
       },
     },
@@ -61,6 +68,12 @@ export const POST = postHandler(async (request, { params }) => {
 
   if (!exam.isPublished) {
     return sendError('Exam is not available', 400);
+  }
+
+  // Get the first available test series for this exam
+  const testSeries = exam.testSeries?.[0];
+  if (!testSeries) {
+    return sendError('No test series available for this exam', 400);
   }
 
   // Check date availability
@@ -78,7 +91,7 @@ export const POST = postHandler(async (request, { params }) => {
   const activeAttempt = await prisma.testAttempt.findFirst({
     where: {
       userId: user.id,
-      examId,
+      testSeriesId: testSeries.id,
       completedAt: null,
     },
   });
@@ -88,10 +101,10 @@ export const POST = postHandler(async (request, { params }) => {
     return sendSuccess({
       attempt: {
         id: activeAttempt.id,
-        examId: activeAttempt.examId,
+        testSeriesId: activeAttempt.testSeriesId,
         startedAt: activeAttempt.startedAt,
-        endTime: new Date(activeAttempt.startedAt.getTime() + exam.duration * 60 * 1000),
-        questions: exam.questions,
+        endTime: new Date(activeAttempt.startedAt.getTime() + testSeries.duration * 60 * 1000),
+        questions: testSeries.questions,
       },
     });
   }
@@ -106,7 +119,7 @@ export const POST = postHandler(async (request, { params }) => {
   const attempt = await prisma.testAttempt.create({
     data: {
       userId: user.id,
-      examId,
+      testSeriesId: testSeries.id,
       startedAt: new Date(),
     },
   });
@@ -114,10 +127,10 @@ export const POST = postHandler(async (request, { params }) => {
   return sendSuccess({
     attempt: {
       id: attempt.id,
-      examId: attempt.examId,
+      testSeriesId: attempt.testSeriesId,
       startedAt: attempt.startedAt,
-      endTime: new Date(attempt.startedAt.getTime() + exam.duration * 60 * 1000),
-      questions: exam.questions,
+      endTime: new Date(attempt.startedAt.getTime() + testSeries.duration * 60 * 1000),
+      questions: testSeries.questions,
     },
   }, undefined, 201);
 });
@@ -131,24 +144,39 @@ const putHandler = createApiRoute({
   },
 });
 
-export const PUT = putHandler(async (request, { params }) => {
-  const { id: examId } = params!;
+export const PUT = putHandler(async (request, context) => {
+  const { id: examId } = context?.params || {};
+  
+  if (!examId) {
+    return sendError('Exam ID is required', 400);
+  }
   const { answers } = request.body!;
   const user = request.user!;
+
+  // First get the exam to find its test series
+  const exam = await prisma.exam.findUnique({
+    where: { id: examId },
+    include: {
+      testSeries: {
+        include: {
+          questions: true,
+        },
+      },
+    },
+  });
+
+  if (!exam || !exam.testSeries?.[0]) {
+    return sendError('Exam or test series not found', 404);
+  }
+
+  const testSeries = exam.testSeries[0];
 
   // Get the active attempt
   const attempt = await prisma.testAttempt.findFirst({
     where: {
       userId: user.id,
-      examId,
+      testSeriesId: testSeries.id,
       completedAt: null,
-    },
-    include: {
-      exam: {
-        include: {
-          questions: true,
-        },
-      },
     },
   });
 
@@ -157,7 +185,7 @@ export const PUT = putHandler(async (request, { params }) => {
   }
 
   // Check if exam time has expired
-  const endTime = new Date(attempt.startedAt.getTime() + attempt.exam.duration * 60 * 1000);
+  const endTime = new Date(attempt.startedAt.getTime() + testSeries.duration * 60 * 1000);
   const now = new Date();
   
   if (now > endTime) {
@@ -173,7 +201,7 @@ export const PUT = putHandler(async (request, { params }) => {
   const questionAnswers = [];
 
   for (const answer of answers) {
-    const question = attempt.exam.questions.find(q => q.id === answer.questionId);
+    const question = testSeries.questions.find(q => q.id === answer.questionId);
     
     if (!question) {
       continue;
@@ -191,24 +219,21 @@ export const PUT = putHandler(async (request, { params }) => {
       skippedAnswers++;
     } else {
       // Compare with correct answer based on question type
-      if (question.type === 'MULTIPLE_CHOICE') {
+      if (question.type === 'MULTIPLE_CHOICE' || question.type === 'SINGLE_CHOICE') {
         isCorrect = answer.userAnswer === question.correctAnswer;
-      } else if (question.type === 'MULTIPLE_SELECT') {
-        const userAnswerArray = Array.isArray(answer.userAnswer) ? answer.userAnswer.sort() : [];
-        const correctAnswerArray = Array.isArray(question.correctAnswer) ? 
-          question.correctAnswer.sort() : [];
-        isCorrect = JSON.stringify(userAnswerArray) === JSON.stringify(correctAnswerArray);
       } else if (question.type === 'TRUE_FALSE') {
         isCorrect = answer.userAnswer === question.correctAnswer;
       } else if (question.type === 'NUMERICAL') {
-        isCorrect = parseFloat(answer.userAnswer) === parseFloat(question.correctAnswer);
+        const userAnswerStr = String(answer.userAnswer);
+        const correctAnswerStr = String(question.correctAnswer);
+        isCorrect = parseFloat(userAnswerStr) === parseFloat(correctAnswerStr);
       }
 
       if (isCorrect) {
-        score = question.marks;
+        score = Number(question.marks);
         correctAnswers++;
       } else {
-        score = -question.negativeMarks;
+        score = -Number(question.negativeMarks);
         incorrectAnswers++;
       }
     }
@@ -227,8 +252,8 @@ export const PUT = putHandler(async (request, { params }) => {
     });
   }
 
-  const percentage = (totalScore / attempt.exam.totalMarks) * 100;
-  const isPassed = totalScore >= attempt.exam.passingMarks;
+  const percentage = (totalScore / testSeries.totalMarks) * 100;
+  const isPassed = totalScore >= testSeries.passingMarks;
 
   // Update attempt with results
   const completedAttempt = await prisma.testAttempt.update({
@@ -240,7 +265,7 @@ export const PUT = putHandler(async (request, { params }) => {
       isPassed,
       correctAnswers,
       incorrectAnswers,
-      skippedAnswers,
+      skippedQuestions: skippedAnswers,
     },
   });
 
@@ -256,7 +281,7 @@ export const PUT = putHandler(async (request, { params }) => {
     result: {
       attemptId: completedAttempt.id,
       score: totalScore,
-      totalMarks: attempt.exam.totalMarks,
+      totalMarks: testSeries.totalMarks,
       percentage,
       isPassed,
       correctAnswers,

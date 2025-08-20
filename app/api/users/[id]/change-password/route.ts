@@ -4,7 +4,6 @@
  * Handles password changes for authenticated users.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { verifyPassword, hashPassword, validatePasswordStrength } from '@/lib/auth';

@@ -4,7 +4,6 @@
  * Handles getting, updating, and deleting individual exams.
  */
 
-import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createApiRoute, sendSuccess, sendError } from '@/lib/api-utils';
 import { prisma } from '@/lib/prisma';

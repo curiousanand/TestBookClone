@@ -21,9 +21,7 @@ export type {
   UserSubscription,
   UserActivity,
   LoginCredentials,
-  RegisterData,
-  UserRole,
-  UserStatus
+  RegisterData
 } from './user';
 
 // Course types
@@ -39,10 +37,7 @@ export type {
   UserProgress,
   CourseProgressSummary,
   LearningPath,
-  CourseStats,
-  CourseStatus,
-  CourseLevel,
-  Language
+  CourseStats
 } from './course';
 
 // Exam types
@@ -59,11 +54,7 @@ export type {
   TestResult,
   QuestionAttempt,
   LiveTest,
-  TestSeriesStats,
-  ExamType,
-  QuestionType,
-  QuestionDifficulty,
-  TestSeriesType
+  TestSeriesStats
 } from './exam';
 
 // =============================================================================

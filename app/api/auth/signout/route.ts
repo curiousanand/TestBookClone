@@ -4,7 +4,6 @@
  * Handles user sign out and session cleanup.
  */
 
-import { NextRequest } from 'next/server';
 import { createApiRoute, sendSuccess } from '@/lib/api-utils';
 import { signOut } from '@/lib/auth';
 
