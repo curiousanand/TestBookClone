@@ -58,9 +58,11 @@ const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
       if (!name) return '?';
       const names = name.trim().split(' ');
       if (names.length === 1) {
-        return names[0].charAt(0).toUpperCase();
+        return names[0]?.charAt(0).toUpperCase() || '?';
       }
-      return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+      const firstChar = names[0]?.charAt(0) || '';
+      const lastChar = names[names.length - 1]?.charAt(0) || '';
+      return (firstChar + lastChar).toUpperCase() || '?';
     };
 
     const handleImageError = () => {
@@ -160,12 +162,13 @@ const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
       >
         {visibleAvatars.map((avatar, index) => {
           if (React.isValidElement(avatar)) {
+            const avatarProps = (avatar as any).props || {};
             return React.cloneElement(avatar, {
               key: index,
               size,
               showBorder: true,
-              className: `relative z-${10 - index} ${avatar.props.className || ''}`,
-              ...avatar.props
+              className: `relative z-${10 - index} ${avatarProps.className || ''}`,
+              ...avatarProps
             });
           }
           return avatar;

@@ -33,8 +33,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     onBlur,
     ...props 
   }, ref) => {
-    const [isFocused, setIsFocused] = useState(false);
-    const [charCount, setCharCount] = useState(value?.toString().length || 0);
+      const [charCount, setCharCount] = useState(value?.toString().length || 0);
 
     const inputId = id || `input-${name || Math.random().toString(36).substr(2, 9)}`;
     const errorId = error ? `${inputId}-error` : undefined;
@@ -67,15 +66,19 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     };
 
     const sizeStyles = {
+      xs: 'px-2 py-1.5 text-xs min-h-[28px]',
       sm: 'px-3 py-2 text-sm min-h-[32px]',
       md: 'px-4 py-2.5 text-sm min-h-[40px]',
-      lg: 'px-4 py-3 text-base min-h-[48px]'
+      lg: 'px-4 py-3 text-base min-h-[48px]',
+      xl: 'px-6 py-4 text-lg min-h-[56px]'
     };
 
     const iconSizeStyles = {
+      xs: 'w-3 h-3',
       sm: 'w-4 h-4',
       md: 'w-5 h-5',
-      lg: 'w-5 h-5'
+      lg: 'w-5 h-5',
+      xl: 'w-6 h-6'
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,12 +90,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     };
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(true);
       onFocus?.(e);
     };
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(false);
       onBlur?.(e);
     };
 

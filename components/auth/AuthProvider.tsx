@@ -204,7 +204,7 @@ function AuthWrapper({ children }: AuthWrapperProps) {
 
 export default function AuthProvider({ children, session }: AuthProviderProps) {
   return (
-    <SessionProvider session={session} refetchInterval={5 * 60} refetchOnWindowFocus={true}>
+    <SessionProvider session={session || null} refetchInterval={5 * 60} refetchOnWindowFocus={true}>
       <AuthWrapper>{children}</AuthWrapper>
     </SessionProvider>
   );

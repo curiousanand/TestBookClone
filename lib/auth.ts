@@ -18,19 +18,16 @@ import type {
   NextAuthConfig, 
   User as NextAuthUser, 
   Session,
-  JWT,
-  Account,
-  Profile
+  Account
 } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import type { 
   User, 
   UserRole, 
   UserStatus,
   AuthUser,
   LoginCredentials,
-  RegisterData,
-  PhoneVerification,
-  PasswordResetRequest 
+  RegisterData
 } from '../types';
 
 // =============================================================================
@@ -43,8 +40,8 @@ const config = getConfig({ validate: false });
  * Twilio client for SMS/OTP services
  */
 const twilioClient = new Twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
+  process.env['TWILIO_ACCOUNT_SID'],
+  process.env['TWILIO_AUTH_TOKEN']
 );
 
 // =============================================================================

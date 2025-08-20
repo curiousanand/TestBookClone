@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import type { LoginCredentials, FormField, ValidationResult } from '@/types';
+import type { FormField, ValidationResult } from '@/types';
 
 // =============================================================================
 // TYPES
@@ -100,10 +100,13 @@ export default function SignInForm({
     field: K,
     updates: Partial<FormField<any>>
   ) => {
-    setFormState(prev => ({
-      ...prev,
-      [field]: { ...prev[field], ...updates },
-    }));
+    setFormState(prev => {
+      const currentField = prev[field] || {};
+      return {
+        ...prev,
+        [field]: { ...currentField, ...updates },
+      };
+    });
   };
 
   const handleInputChange = (field: keyof SignInFormState, value: any) => {

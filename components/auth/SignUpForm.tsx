@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { RegisterData, FormField, ValidationResult } from '@/types';
+import type { FormField, ValidationResult } from '@/types';
 
 // =============================================================================
 // TYPES
@@ -137,7 +137,6 @@ function validateConfirmPassword(password: string, confirmPassword: string): Val
 export default function SignUpForm({
   className = '',
   redirectTo = '/dashboard',
-  showSocialSignup = true,
   onSuccess,
   onError,
 }: SignUpFormProps) {
@@ -164,10 +163,13 @@ export default function SignUpForm({
     field: K,
     updates: Partial<FormField<any>>
   ) => {
-    setFormState(prev => ({
-      ...prev,
-      [field]: { ...prev[field], ...updates },
-    }));
+    setFormState(prev => {
+      const currentField = prev[field] || {};
+      return {
+        ...prev,
+        [field]: { ...currentField, ...updates },
+      };
+    });
   };
 
   const handleInputChange = (field: keyof SignUpFormState, value: any) => {
@@ -315,15 +317,19 @@ export default function SignUpForm({
     setFormState(prev => ({ ...prev, isSubmitting: true, error: null }));
 
     try {
-      const registerData: RegisterData = {
+      const registerData: any = {
         name: formState.name.value.trim(),
         email: formState.email.value.trim().toLowerCase(),
-        phone: formState.phone.value.trim() || undefined,
         password: formState.password.value,
         confirmPassword: formState.confirmPassword.value,
         termsAccepted: formState.termsAccepted.value,
         marketingConsent: formState.marketingConsent.value,
       };
+      
+      // Only add phone if it has a value
+      if (formState.phone.value.trim()) {
+        registerData.phone = formState.phone.value.trim();
+      }
 
       const response = await fetch('/api/auth/register', {
         method: 'POST',

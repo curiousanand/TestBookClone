@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'Phone number or email is required',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -33,7 +36,10 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           message: 'OTP is required',
           statusCode: 400,
+          type: 'VALIDATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -49,7 +55,10 @@ export async function POST(request: NextRequest) {
           code: 'INVALID_OTP',
           message: 'Invalid or expired OTP',
           statusCode: 400,
+          type: 'AUTHENTICATION_ERROR',
         },
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
       } satisfies ApiResponse, { status: 400 });
     }
 
@@ -87,6 +96,7 @@ export async function POST(request: NextRequest) {
         code: 'SERVER_ERROR',
         message: 'Failed to verify OTP. Please try again.',
         statusCode: 500,
+        type: 'SERVER_ERROR',
       },
       timestamp: new Date().toISOString(),
       requestId: crypto.randomUUID(),
