@@ -5,6 +5,7 @@
  * and reusable type helpers across the application.
  */
 
+
 // =============================================================================
 // GENERIC UTILITY TYPES
 // =============================================================================
@@ -295,7 +296,7 @@ export interface ApiEndpoints {
   getDashboardAnalytics: ApiEndpoint;
   getUserAnalytics: ApiEndpoint;
   getCourseAnalytics: ApiEndpoint;
-  getTestAnalytics: ApiEndpoint;
+  getExamAnalytics: ApiEndpoint;
   
   // Search
   globalSearch: ApiEndpoint;
@@ -722,10 +723,16 @@ export interface EventEmitter {
 /**
  * Mock function type
  */
-export type MockFunction<T extends (...args: any[]) => any> = jest.Mock<
-  ReturnType<T>,
-  Parameters<T>
->;
+export type MockFunction<T extends (...args: any[]) => any> = {
+  (...args: Parameters<T>): ReturnType<T>;
+  mock: {
+    calls: Parameters<T>[];
+    results: Array<{
+      type: 'return' | 'throw';
+      value: ReturnType<T>;
+    }>;
+  };
+};
 
 /**
  * Component test props

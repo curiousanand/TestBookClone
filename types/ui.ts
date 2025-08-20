@@ -6,6 +6,20 @@
  */
 
 import { ReactNode, ComponentProps, CSSProperties } from 'react';
+import type {
+  PublicUserProfile,
+  UserStats
+} from './user';
+import type {
+  PublicCourse,
+  Lesson,
+  CourseProgressSummary
+} from './course';
+import type {
+  PublicTestSeries,
+  Question,
+  TestResult
+} from './exam';
 
 // =============================================================================
 // BASE UI TYPES

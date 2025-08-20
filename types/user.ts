@@ -504,14 +504,16 @@ export type UserCreate = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
  */
 export type UserListItem = Pick<User, 
   | 'id' 
-  | 'name' 
+  | 'fullName' 
   | 'email' 
   | 'avatar' 
   | 'role' 
   | 'status' 
   | 'createdAt' 
   | 'lastActiveAt'
->;
+> & {
+  name: string; // Alias for fullName for backward compatibility
+};
 
 /**
  * User search filters

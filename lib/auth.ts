@@ -11,7 +11,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Twilio } from 'twilio';
+// Twilio import moved to dynamic import to avoid edge runtime issues
 import { prisma } from './prisma';
 import { getConfig } from './config';
 import type { 
@@ -36,13 +36,7 @@ import type {
 
 const config = getConfig({ validate: false });
 
-/**
- * Twilio client for SMS/OTP services
- */
-const twilioClient = new Twilio(
-  process.env['TWILIO_ACCOUNT_SID'],
-  process.env['TWILIO_AUTH_TOKEN']
-);
+// Twilio client will be initialized dynamically when needed
 
 // =============================================================================
 // PASSWORD UTILITIES
@@ -135,10 +129,10 @@ export function validatePasswordStrength(password: string): {
  * Generate JWT token
  */
 export function generateJWT(payload: Record<string, any>, expiresIn: string = '7d'): string {
-  return jwt.sign(payload, config.jwt.secret, { 
+  return jwt.sign(payload, config.auth.jwtSecret, { 
     expiresIn,
-    issuer: config.app.name,
-    audience: config.app.url 
+    issuer: config.appName,
+    audience: config.appUrl 
   });
 }
 
@@ -147,9 +141,9 @@ export function generateJWT(payload: Record<string, any>, expiresIn: string = '7
  */
 export function verifyJWT<T = any>(token: string): T | null {
   try {
-    return jwt.verify(token, config.jwt.secret, {
-      issuer: config.app.name,
-      audience: config.app.url
+    return jwt.verify(token, config.auth.jwtSecret, {
+      issuer: config.appName,
+      audience: config.appUrl
     }) as T;
   } catch (error) {
     console.error('JWT verification failed:', error);
@@ -197,13 +191,20 @@ export function generateOTP(length: number = 6): string {
  */
 export async function sendOTP(phoneNumber: string, otp: string): Promise<boolean> {
   try {
-    if (!process.env.TWILIO_PHONE_NUMBER) {
+    if (!process.env['TWILIO_PHONE_NUMBER']) {
       throw new Error('Twilio phone number not configured');
     }
 
+    // Dynamic import to avoid Edge Runtime issues
+    const { Twilio } = await import('twilio');
+    const twilioClient = new Twilio(
+      process.env['TWILIO_ACCOUNT_SID'],
+      process.env['TWILIO_AUTH_TOKEN']
+    );
+
     const message = await twilioClient.messages.create({
       body: `Your TestBook verification code is: ${otp}. This code expires in 10 minutes.`,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: process.env['TWILIO_PHONE_NUMBER'],
       to: phoneNumber,
     });
 
@@ -323,7 +324,7 @@ export async function createUser(userData: RegisterData): Promise<User> {
     where: {
       OR: [
         { email: userData.email },
-        { phone: userData.phone },
+        ...(userData.phone ? [{ phone: userData.phone }] : []),
       ],
     },
   });
@@ -342,7 +343,7 @@ export async function createUser(userData: RegisterData): Promise<User> {
       lastName: userData.name.split(' ').slice(1).join(' ') || '',
       fullName: userData.name,
       email: userData.email,
-      phone: userData.phone,
+      phone: userData.phone || null,
       role: 'STUDENT',
       status: 'PENDING_VERIFICATION',
       emailVerified: false,
@@ -414,7 +415,7 @@ export async function authenticateUser(
       id: user.id,
       name: user.fullName,
       email: user.email,
-      avatar: user.avatar,
+      avatar: user.avatar || null,
       role: user.role,
       status: user.status,
       emailVerified: user.emailVerified,
@@ -555,11 +556,11 @@ export function transformUser(user: User): NextAuthUser {
  * Custom session callback
  */
 export async function sessionCallback({ session, token }: { session: Session; token: JWT }) {
-  if (token) {
-    session.user.id = token.id as string;
-    session.user.role = token.role as UserRole;
-    session.user.status = token.status as UserStatus;
-    session.user.permissions = token.permissions as string[];
+  if (token && session.user) {
+    (session.user as any).id = token['id'] as string;
+    (session.user as any).role = token['role'] as UserRole;
+    (session.user as any).status = token['status'] as UserStatus;
+    (session.user as any).permissions = token['permissions'] as string[];
   }
   return session;
 }
@@ -593,7 +594,6 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/auth/signin',
-    signUp: '/auth/signup',
     error: '/auth/error',
     verifyRequest: '/auth/verify-request',
     newUser: '/onboarding',
@@ -626,8 +626,8 @@ export const authConfig: NextAuthConfig = {
 
     // Google OAuth Provider
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env['GOOGLE_CLIENT_ID']!,
+      clientSecret: process.env['GOOGLE_CLIENT_SECRET']!,
       authorization: {
         params: {
           prompt: 'consent',
