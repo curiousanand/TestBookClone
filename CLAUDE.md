@@ -252,9 +252,42 @@ AGORA_APP_CERTIFICATE=your-agora-certificate
 
 This repository serves as the foundation for building a comprehensive educational platform matching TestBook's scale and functionality.
 
+## 🚨 CRITICAL GIT WORKFLOW REQUIREMENTS 🚨
+
+**MANDATORY WORKFLOW - NO EXCEPTIONS:**
+
+### 🔒 Main Branch Protection Rules:
+- **NEVER work directly on `main` branch**
+- **ALWAYS create a separate feature branch** for each task
+- **Complete all development work** in the feature branch only
+- **Perform end-to-end testing** before requesting merge
+- **ASK USER PERMISSION** before merging any feature branch to main
+- **Main branch is SACRED** - no direct commits allowed
+
+### 🌿 Feature Branch Workflow:
+```bash
+# 1. Always start with a feature branch
+git checkout -b feature/task-[number]-[description]
+
+# 2. Do ALL development work in feature branch
+# 3. Test everything thoroughly 
+# 4. Commit changes with descriptive messages
+
+# 5. ALWAYS ASK: "Task completed and tested. Can I merge feature/[name] to main?"
+# 6. Only merge after explicit user approval
+```
+
+### 📝 Branch Naming Convention:
+- `feature/task-[number]-[description]` (e.g., `feature/task-3-database-schema`)
+- `feature/[component-name]` (e.g., `feature/authentication-system`) 
+- `feature/[functionality]` (e.g., `feature/payment-integration`)
+
+**This workflow is MANDATORY and must be followed for every single task.**
+
 ## Git Guidelines
 
-- DO NOT mention Claude or AI assistance in commit messages I SAID DO NOT MENTION
+- DO NOT mention Claude or AI assistance in commit messages
 - Keep commit messages descriptive of the actual changes made
+- Always work in feature branches, never directly on main
 
 ## ⚠️ CRITICAL DEVELOPMENT CONSTRAINTS ⚠️
