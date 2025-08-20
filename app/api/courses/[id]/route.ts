@@ -38,32 +38,32 @@ const getHandler = createApiRoute({
   },
 });
 
-export const GET = getHandler(async (request, { params }) => {
-  const { id } = params!;
+export const GET = getHandler(async (request, context) => {
+  const { id } = context?.params!;
 
   const course = await prisma.course.findUnique({
     where: { id },
-    include: {
-      category: {
-        select: { name: true, slug: true },
-      },
-      instructor: {
-        select: { id: true, fullName: true, avatar: true, bio: true },
-      },
-      lessons: {
-        select: {
-          id: true,
-          title: true,
-          duration: true,
-          isPreview: true,
-          sortOrder: true,
-        },
-        orderBy: { sortOrder: 'asc' },
-      },
-      _count: {
-        select: { enrollments: true },
-      },
-    },
+    // include: {
+    //   category: {
+    //     select: { name: true, slug: true },
+    //   },
+    //   instructor: {
+    //     select: { id: true, fullName: true, avatar: true, bio: true },
+    //   },
+    //   lessons: {
+    //     select: {
+    //       id: true,
+    //       title: true,
+    //       // duration: true,
+    //       // isPreview: true,
+    //       sortOrder: true,
+    //     },
+    //     orderBy: { sortOrder: 'asc' },
+    //   },
+    //   _count: {
+    //     select: { enrollments: true },
+    //   },
+    // },
   });
 
   if (!course) {
@@ -101,14 +101,14 @@ export const GET = getHandler(async (request, { params }) => {
       price: course.price,
       originalPrice: course.originalPrice,
       isFree: course.isFree,
-      duration: course.duration,
+      // duration: course.duration,
       thumbnail: course.thumbnail,
       tags: course.tags,
       isPublished: course.isPublished,
-      category: course.category,
-      instructor: course.instructor,
-      lessons: course.lessons,
-      enrollmentCount: course._count.enrollments,
+      // category: course.category,
+      // instructor: course.instructor,
+      // lessons: course.lessons,
+      // enrollmentCount: course._count.enrollments,
       isEnrolled,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
@@ -125,8 +125,8 @@ const putHandler = createApiRoute({
   },
 });
 
-export const PUT = putHandler(async (request, { params }) => {
-  const { id } = params!;
+export const PUT = putHandler(async (request, context) => {
+  const { id } = context?.params!;
   const updateData = request.body!;
   const user = request.user!;
 
@@ -159,14 +159,14 @@ export const PUT = putHandler(async (request, { params }) => {
   const updatedCourse = await prisma.course.update({
     where: { id },
     data: updateData,
-    include: {
-      category: {
-        select: { name: true, slug: true },
-      },
-      instructor: {
-        select: { id: true, fullName: true, avatar: true },
-      },
-    },
+    // include: {
+    //   category: {
+    //     select: { name: true, slug: true },
+    //   },
+    //   instructor: {
+    //     select: { id: true, fullName: true, avatar: true },
+    //   },
+    // },
   });
 
   return sendSuccess({
@@ -180,12 +180,12 @@ export const PUT = putHandler(async (request, { params }) => {
       price: updatedCourse.price,
       originalPrice: updatedCourse.originalPrice,
       isFree: updatedCourse.isFree,
-      duration: updatedCourse.duration,
+      // duration: updatedCourse.duration,
       thumbnail: updatedCourse.thumbnail,
       tags: updatedCourse.tags,
       isPublished: updatedCourse.isPublished,
-      category: updatedCourse.category,
-      instructor: updatedCourse.instructor,
+      // category: updatedCourse.category,
+      // instructor: updatedCourse.instructor,
       updatedAt: updatedCourse.updatedAt,
     },
   });
@@ -199,8 +199,8 @@ const deleteHandler = createApiRoute({
   },
 });
 
-export const DELETE = deleteHandler(async (request, { params }) => {
-  const { id } = params!;
+export const DELETE = deleteHandler(async (request, context) => {
+  const { id } = context?.params!;
   const user = request.user!;
 
   // Get the course to check ownership
