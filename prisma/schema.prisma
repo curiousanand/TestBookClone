@@ -1,0 +1,910 @@
+// =============================================================================
+// TESTBOOK CLONE - PRISMA DATABASE SCHEMA
+// =============================================================================
+// Complete database schema for TestBook Clone application
+// Supports: Users, Courses, Exams, Tests, Live Classes, Payments, Subscriptions
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  STRIPE
+  PAYPAL
+  UPI
+  CARD
+  BANK_TRANSFER
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  COMING_SOON
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum ExamType {
+  MOCK_TEST
+  PRACTICE_TEST
+  PREVIOUS_YEAR
+  CUSTOM_TEST
+  LIVE_TEST
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+  DESCRIPTIVE
+  NUMERICAL
+  FILL_BLANKS
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  VERY_HARD
+}
+
+enum LiveClassStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum TestSeriesType {
+  FREE
+  PAID
+  PREMIUM
+}
+
+enum Language {
+  ENGLISH
+  HINDI
+  TAMIL
+  TELUGU
+  BENGALI
+  GUJARATI
+  MARATHI
+  KANNADA
+}
+
+// =============================================================================
+// USER MANAGEMENT
+// =============================================================================
+
+model User {
+  // Basic Information
+  id                String           @id @default(cuid())
+  email             String           @unique
+  emailVerified     DateTime?
+  phone             String?          @unique
+  phoneVerified     DateTime?
+  username          String?          @unique
+  
+  // Profile Information  
+  firstName         String
+  lastName          String
+  fullName          String?
+  avatar            String?
+  bio               String?
+  dateOfBirth       DateTime?
+  gender            String?
+  
+  // Account Settings
+  role              UserRole         @default(STUDENT)
+  status            UserStatus       @default(PENDING_VERIFICATION)
+  isEmailVerified   Boolean          @default(false)
+  isPhoneVerified   Boolean          @default(false)
+  language          Language         @default(ENGLISH)
+  timezone          String           @default("Asia/Kolkata")
+  
+  // Security
+  password          String?
+  lastLogin         DateTime?
+  loginCount        Int              @default(0)
+  
+  // Preferences
+  preferences       Json?            // Store user preferences as JSON
+  
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relationships
+  accounts          Account[]
+  sessions          Session[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+  enrollments       CourseEnrollment[]
+  progress          UserProgress[]
+  testAttempts      TestAttempt[]
+  liveClassAttendance LiveClassAttendance[]
+  instructorClasses LiveClass[]      @relation("InstructorClasses")
+  createdCourses    Course[]         @relation("CourseCreator")
+  createdQuestions  Question[]       @relation("QuestionCreator")
+  createdTestSeries TestSeries[]     @relation("TestSeriesCreator")
+  notifications     Notification[]
+  
+  @@map("users")
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([expires])
+}
+
+// =============================================================================
+// SUBSCRIPTION & PAYMENT MANAGEMENT
+// =============================================================================
+
+model Subscription {
+  id              String             @id @default(cuid())
+  userId          String
+  planName        String
+  planType        String
+  status          SubscriptionStatus @default(PENDING)
+  
+  // Pricing
+  amount          Decimal            @db.Decimal(10, 2)
+  currency        String             @default("INR")
+  
+  // Billing Period
+  startDate       DateTime
+  endDate         DateTime
+  billingCycle    String             // monthly, yearly, lifetime
+  
+  // Trial
+  isTrialPeriod   Boolean            @default(false)
+  trialEndDate    DateTime?
+  
+  // Auto-renewal
+  autoRenew       Boolean            @default(true)
+  nextBillingDate DateTime?
+  
+  // Cancellation
+  cancelledAt     DateTime?
+  cancelReason    String?
+  
+  // Features
+  features        Json?              // Store plan features as JSON
+  limits          Json?              // Store usage limits as JSON
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relationships
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+
+  @@map("subscriptions")
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@index([nextBillingDate])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  subscriptionId    String?
+  
+  // Payment Details
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  method            PaymentMethod
+  
+  // Gateway Information
+  gatewayOrderId    String?       // Razorpay/Stripe order ID
+  gatewayPaymentId  String?       // Gateway payment ID
+  gatewaySignature  String?       // Payment signature for verification
+  
+  // Transaction Details
+  transactionId     String?       @unique
+  receiptNumber     String?       @unique
+  description       String?
+  
+  // Refund Information
+  refundedAmount    Decimal?      @db.Decimal(10, 2)
+  refundedAt        DateTime?
+  refundReason      String?
+  
+  // Metadata
+  metadata          Json?         // Additional payment metadata
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relationships
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@map("payments")
+  @@index([userId])
+  @@index([status])
+  @@index([gatewayOrderId])
+  @@index([transactionId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// COURSE MANAGEMENT
+// =============================================================================
+
+model Category {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  slug         String   @unique
+  description  String?
+  icon         String?
+  color        String?
+  parentId     String?
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Self-referencing relationship for subcategories
+  parent       Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children     Category[] @relation("CategoryHierarchy")
+  
+  // Relationships
+  courses      Course[]
+  exams        Exam[]
+
+  @@map("categories")
+  @@index([parentId])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Course {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  description     String?
+  shortDescription String?
+  
+  // Content
+  thumbnail       String?
+  videoPreview    String?
+  syllabus        Json?         // Structured syllabus data
+  
+  // Categorization
+  categoryId      String
+  tags            String[]      @default([])
+  level           CourseLevel   @default(BEGINNER)
+  language        Language      @default(ENGLISH)
+  
+  // Instructor
+  instructorId    String
+  
+  // Pricing
+  price           Decimal?      @db.Decimal(10, 2)
+  originalPrice   Decimal?      @db.Decimal(10, 2)
+  currency        String        @default("INR")
+  isFree          Boolean       @default(false)
+  
+  // Status & Visibility
+  status          CourseStatus  @default(DRAFT)
+  isPublished     Boolean       @default(false)
+  publishedAt     DateTime?
+  
+  // Duration & Structure
+  estimatedHours  Int?          // Total course duration in hours
+  totalLessons    Int           @default(0)
+  totalVideos     Int           @default(0)
+  totalQuizzes    Int           @default(0)
+  
+  // Enrollment
+  enrollmentCount Int           @default(0)
+  maxEnrollments  Int?          // Null = unlimited
+  
+  // Rating
+  averageRating   Decimal?      @db.Decimal(3, 2)
+  totalRatings    Int           @default(0)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relationships
+  category        Category      @relation(fields: [categoryId], references: [id])
+  instructor      User          @relation("CourseCreator", fields: [instructorId], references: [id])
+  lessons         Lesson[]
+  enrollments     CourseEnrollment[]
+  progress        UserProgress[]
+
+  @@map("courses")
+  @@index([categoryId])
+  @@index([instructorId])
+  @@index([status])
+  @@index([isPublished])
+  @@index([price])
+  @@index([createdAt])
+}
+
+model Lesson {
+  id            String   @id @default(cuid())
+  courseId      String
+  title         String
+  slug          String
+  description   String?
+  
+  // Content
+  videoUrl      String?
+  videoDuration Int?     // Duration in seconds
+  content       String?  // Text content/notes
+  attachments   Json?    // File attachments
+  
+  // Structure
+  chapterNumber Int      @default(1)
+  lessonNumber  Int      @default(1)
+  sortOrder     Int      @default(0)
+  
+  // Access Control
+  isFree        Boolean  @default(false)
+  isPublished   Boolean  @default(false)
+  
+  // Metadata
+  watchTime     Int      @default(0) // Total watch time by all users
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress      UserProgress[]
+
+  @@map("lessons")
+  @@unique([courseId, slug])
+  @@index([courseId])
+  @@index([isPublished])
+  @@index([sortOrder])
+}
+
+model CourseEnrollment {
+  id              String    @id @default(cuid())
+  userId          String
+  courseId        String
+  
+  // Enrollment Details
+  enrolledAt      DateTime  @default(now())
+  completedAt     DateTime?
+  isCompleted     Boolean   @default(false)
+  
+  // Progress
+  progressPercent Decimal   @default(0) @db.Decimal(5, 2)
+  lastAccessedAt  DateTime?
+  timeSpent       Int       @default(0) // Total time in seconds
+  
+  // Completion Certificate
+  certificateId   String?   @unique
+  certificateUrl  String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("course_enrollments")
+  @@index([userId])
+  @@index([courseId])
+  @@index([isCompleted])
+}
+
+model UserProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  courseId        String?
+  lessonId        String?
+  
+  // Progress Details
+  isCompleted     Boolean   @default(false)
+  completedAt     DateTime?
+  watchedDuration Int       @default(0) // Watched duration in seconds
+  totalDuration   Int?      // Total content duration
+  
+  // Bookmarks & Notes
+  bookmarkedAt    DateTime?
+  notes           String?
+  lastPosition    Int?      // Last watched position in seconds
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course?   @relation(fields: [courseId], references: [id])
+  lesson          Lesson?   @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+  @@map("user_progress")
+  @@index([userId])
+  @@index([courseId])
+  @@index([isCompleted])
+}
+
+// =============================================================================
+// EXAM & TEST MANAGEMENT
+// =============================================================================
+
+model Exam {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  description     String?
+  
+  // Categorization
+  categoryId      String
+  examCode        String?      @unique // E.g., "JEE-MAIN-2024"
+  
+  // Exam Details
+  type            ExamType     @default(MOCK_TEST)
+  totalMarks      Int
+  totalQuestions  Int
+  duration        Int          // Duration in minutes
+  
+  // Timing
+  startDate       DateTime?    // For scheduled exams
+  endDate         DateTime?
+  
+  // Access Control
+  isFree          Boolean      @default(false)
+  price           Decimal?     @db.Decimal(10, 2)
+  isPublished     Boolean      @default(false)
+  
+  // Instructions & Rules
+  instructions    String?
+  rules           Json?        // Exam rules as JSON
+  
+  // Settings
+  allowReview     Boolean      @default(true)
+  showResults     Boolean      @default(true)
+  randomizeOrder  Boolean      @default(false)
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relationships
+  category        Category     @relation(fields: [categoryId], references: [id])
+  testSeries      TestSeries[]
+  attempts        TestAttempt[]
+
+  @@map("exams")
+  @@index([categoryId])
+  @@index([type])
+  @@index([isPublished])
+  @@index([isFree])
+}
+
+model TestSeries {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  description     String?
+  
+  // Creator
+  creatorId       String
+  
+  // Exam Association
+  examId          String?
+  
+  // Categorization
+  type            TestSeriesType @default(FREE)
+  tags            String[]       @default([])
+  
+  // Pricing
+  price           Decimal?       @db.Decimal(10, 2)
+  originalPrice   Decimal?       @db.Decimal(10, 2)
+  isFree          Boolean        @default(false)
+  
+  // Content
+  totalTests      Int            @default(0)
+  totalQuestions  Int            @default(0)
+  estimatedHours  Int?
+  
+  // Validity
+  validFrom       DateTime?
+  validUntil      DateTime?
+  
+  // Status
+  isActive        Boolean        @default(true)
+  isPublished     Boolean        @default(false)
+  
+  // Statistics
+  enrollmentCount Int            @default(0)
+  averageScore    Decimal?       @db.Decimal(5, 2)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relationships
+  creator         User           @relation("TestSeriesCreator", fields: [creatorId], references: [id])
+  exam            Exam?          @relation(fields: [examId], references: [id])
+  questions       Question[]
+
+  @@map("test_series")
+  @@index([creatorId])
+  @@index([examId])
+  @@index([type])
+  @@index([isPublished])
+}
+
+model Question {
+  id                String             @id @default(cuid())
+  
+  // Content
+  title             String?            // Question title/topic
+  questionText      String             // The actual question
+  options           Json?              // Multiple choice options
+  correctAnswer     Json               // Correct answer(s)
+  explanation       String?            // Detailed explanation
+  
+  // Categorization
+  testSeriesId      String?
+  subject           String
+  chapter           String?
+  topic             String?
+  subtopic          String?
+  tags              String[]           @default([])
+  
+  // Properties
+  type              QuestionType       @default(MULTIPLE_CHOICE)
+  difficulty        QuestionDifficulty @default(MEDIUM)
+  marks             Int                @default(1)
+  negativeMarks     Decimal?           @db.Decimal(3, 2)
+  
+  // Metadata
+  creatorId         String
+  language          Language           @default(ENGLISH)
+  
+  // Usage Statistics
+  attemptCount      Int                @default(0)
+  correctCount      Int                @default(0)
+  averageTime       Int?               // Average time in seconds
+  
+  // Media
+  images            String[]           @default([])
+  videos            String[]           @default([])
+  
+  // Status
+  isActive          Boolean            @default(true)
+  isVerified        Boolean            @default(false)
+  verifiedBy        String?
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relationships
+  creator           User               @relation("QuestionCreator", fields: [creatorId], references: [id])
+  testSeries        TestSeries?        @relation(fields: [testSeriesId], references: [id])
+  attempts          QuestionAttempt[]
+
+  @@map("questions")
+  @@index([testSeriesId])
+  @@index([creatorId])
+  @@index([subject])
+  @@index([difficulty])
+  @@index([isActive])
+  @@index([type])
+}
+
+model TestAttempt {
+  id              String    @id @default(cuid())
+  userId          String
+  examId          String?
+  testSeriesId    String?
+  
+  // Attempt Details
+  startTime       DateTime
+  endTime         DateTime?
+  duration        Int?      // Actual duration in minutes
+  isCompleted     Boolean   @default(false)
+  isSubmitted     Boolean   @default(false)
+  
+  // Scoring
+  totalQuestions  Int
+  attemptedCount  Int       @default(0)
+  correctCount    Int       @default(0)
+  incorrectCount  Int       @default(0)
+  skippedCount    Int       @default(0)
+  
+  // Results
+  totalMarks      Decimal   @default(0) @db.Decimal(8, 2)
+  obtainedMarks   Decimal   @default(0) @db.Decimal(8, 2)
+  percentage      Decimal   @default(0) @db.Decimal(5, 2)
+  
+  // Ranking
+  rank            Int?
+  percentile      Decimal?  @db.Decimal(5, 2)
+  
+  // Analysis
+  subjectWise     Json?     // Subject-wise performance
+  chapterWise     Json?     // Chapter-wise performance
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam            Exam?     @relation(fields: [examId], references: [id])
+  questionAttempts QuestionAttempt[]
+
+  @@map("test_attempts")
+  @@index([userId])
+  @@index([examId])
+  @@index([isCompleted])
+  @@index([obtainedMarks])
+  @@index([createdAt])
+}
+
+model QuestionAttempt {
+  id                String      @id @default(cuid())
+  testAttemptId     String
+  questionId        String
+  
+  // Answer Details
+  selectedAnswer    Json?       // User's selected answer
+  isCorrect         Boolean     @default(false)
+  marksObtained     Decimal     @default(0) @db.Decimal(5, 2)
+  timeTaken         Int?        // Time taken in seconds
+  
+  // Flags
+  isMarkedForReview Boolean     @default(false)
+  isSkipped         Boolean     @default(false)
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relationships
+  testAttempt       TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+  question          Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([testAttemptId, questionId])
+  @@map("question_attempts")
+  @@index([testAttemptId])
+  @@index([questionId])
+}
+
+// =============================================================================
+// LIVE CLASSES
+// =============================================================================
+
+model LiveClass {
+  id              String            @id @default(cuid())
+  title           String
+  description     String?
+  
+  // Instructor
+  instructorId    String
+  
+  // Scheduling
+  scheduledStart  DateTime
+  scheduledEnd    DateTime
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  
+  // Status
+  status          LiveClassStatus   @default(SCHEDULED)
+  
+  // Access
+  isFree          Boolean           @default(false)
+  price           Decimal?          @db.Decimal(10, 2)
+  maxAttendees    Int?              // Null = unlimited
+  
+  // Meeting Details
+  meetingId       String?           @unique // Agora/Zoom meeting ID
+  meetingPassword String?
+  recordingUrl    String?
+  
+  // Content
+  subject         String?
+  chapter         String?
+  tags            String[]          @default([])
+  
+  // Resources
+  materials       Json?             // Class materials/attachments
+  notes           String?           // Class notes
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relationships
+  instructor      User              @relation("InstructorClasses", fields: [instructorId], references: [id])
+  attendances     LiveClassAttendance[]
+
+  @@map("live_classes")
+  @@index([instructorId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([isFree])
+}
+
+model LiveClassAttendance {
+  id            String    @id @default(cuid())
+  userId        String
+  liveClassId   String
+  
+  // Attendance Details
+  joinedAt      DateTime?
+  leftAt        DateTime?
+  duration      Int?      // Attendance duration in minutes
+  isPresent     Boolean   @default(false)
+  
+  // Interaction
+  chatMessages  Int       @default(0)
+  questionsAsked Int      @default(0)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  liveClass     LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, liveClassId])
+  @@map("live_class_attendances")
+  @@index([userId])
+  @@index([liveClassId])
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        String   // email, push, sms, in-app
+  category    String?  // course, exam, payment, system
+  
+  // Status
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  
+  // Delivery
+  isSent      Boolean  @default(false)
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  
+  // Data
+  data        Json?    // Additional notification data
+  actionUrl   String?  // URL for notification action
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// INDEXES FOR PERFORMANCE OPTIMIZATION
+// =============================================================================
+
+// Additional composite indexes for common queries
+// These are added to the models above using @@index([field1, field2])
+
+// User Management Indexes
+// - User enrollment queries: @@index([userId, courseId]) in CourseEnrollment
+// - User test performance: @@index([userId, isCompleted]) in TestAttempt
+// - User subscription status: @@index([userId, status]) in Subscription
+
+// Course Management Indexes  
+// - Published courses by category: @@index([categoryId, isPublished]) in Course
+// - Course pricing queries: @@index([price, isFree]) in Course
+// - Course popularity: @@index([enrollmentCount]) in Course
+
+// Test Management Indexes
+// - Questions by difficulty and subject: @@index([subject, difficulty]) in Question
+// - Active test series: @@index([isPublished, isActive]) in TestSeries
+// - Test attempts by date: @@index([createdAt, isCompleted]) in TestAttempt
+
+// Performance Monitoring Indexes
+// - Payment transaction lookups: @@index([gatewayOrderId, status]) in Payment
+// - Live class schedules: @@index([scheduledStart, status]) in LiveClass
+// - Notification delivery: @@index([userId, isSent, type]) in Notification

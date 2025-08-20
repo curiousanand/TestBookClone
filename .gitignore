@@ -117,3 +117,4 @@ Thumbs.db
 **/public/workbox-*.js
 **/public/worker-*.js
 **/public/fallback-*.js
+/generated/prisma
