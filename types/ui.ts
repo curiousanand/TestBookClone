@@ -5,32 +5,7 @@
  * UI states, form components, and design system elements.
  */
 
-import { ReactNode, ComponentProps, HTMLAttributes, CSSProperties } from 'react';
-import type { 
-  User, 
-  PublicUserProfile,
-  UserStats,
-  UserPreferences 
-} from './user';
-
-import type { 
-  Course, 
-  PublicCourse, 
-  Lesson,
-  Category,
-  CourseProgressSummary,
-  LearningPath 
-} from './course';
-
-import type { 
-  TestSeries, 
-  PublicTestSeries,
-  Question,
-  TestResult,
-  TestAttempt 
-} from './exam';
-
-import type { ApiResponse, PaginatedResponse } from './api';
+import { ReactNode, ComponentProps, CSSProperties } from 'react';
 
 // =============================================================================
 // BASE UI TYPES
@@ -242,7 +217,7 @@ export interface SelectOption {
  * Checkbox component props
  */
 export interface CheckboxProps extends BaseComponentProps,
-  Omit<ComponentProps<'input'>, 'type'> {
+  Omit<ComponentProps<'input'>, 'type' | 'size'> {
   label?: ReactNode;
   description?: string;
   error?: string;
@@ -255,7 +230,7 @@ export interface CheckboxProps extends BaseComponentProps,
  * Radio component props
  */
 export interface RadioProps extends BaseComponentProps,
-  Omit<ComponentProps<'input'>, 'type'> {
+  Omit<ComponentProps<'input'>, 'type' | 'size'> {
   label?: ReactNode;
   description?: string;
   size?: ComponentSize;
@@ -266,7 +241,7 @@ export interface RadioProps extends BaseComponentProps,
  * Switch component props
  */
 export interface SwitchProps extends BaseComponentProps,
-  Omit<ComponentProps<'input'>, 'type'> {
+  Omit<ComponentProps<'input'>, 'type' | 'size'> {
   label?: ReactNode;
   description?: string;
   size?: ComponentSize;
@@ -460,14 +435,12 @@ export interface TagProps extends BaseComponentProps, WithChildren {
  * Alert component props
  */
 export interface AlertProps extends BaseComponentProps, WithChildren {
-  type?: 'info' | 'success' | 'warning' | 'error';
+  variant?: 'info' | 'success' | 'warning' | 'danger';
+  size?: ComponentSize;
+  dismissible?: boolean;
+  icon?: boolean | ReactNode;
   title?: ReactNode;
-  description?: ReactNode;
-  closable?: boolean;
-  onClose?: () => void;
-  icon?: ReactNode;
-  action?: ReactNode;
-  banner?: boolean;
+  onDismiss?: () => void;
 }
 
 /**
@@ -1155,7 +1128,5 @@ export type ThemeBreakpoints = Record<Breakpoint, string>;
 // EXPORTS
 // =============================================================================
 
-export type * from './user';
-export type * from './course';
-export type * from './exam';
-export type * from './api';
+// Re-export specific types to avoid conflicts
+// Individual component types are exported above
